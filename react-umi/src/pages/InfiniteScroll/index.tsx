@@ -1,5 +1,7 @@
-import PageContainer from '@/components/Container/index.tsx'
+import PageContainer from "@/components/Container/index.tsx"
 import React, { useEffect, useRef, useState } from 'react'
+import { Listy } from 'antd';
+
 interface Card {
 	id: number
 	title: string
@@ -26,6 +28,7 @@ const InfiniteScroll: React.FC = () => {
 	const [loading, setLoading] = useState(false)
 	const [hasMore, setHasMore] = useState(true)
 	const containerRef = useRef<HTMLDivElement>(null)
+	const [listHeight, setListHeight] = useState(0);
 
 	const PAGE_SIZE = 150
 
@@ -63,33 +66,43 @@ const InfiniteScroll: React.FC = () => {
 			}
 		}
 	}, [loading, hasMore])
+	
+	useEffect(() => {
+		const el = document.querySelector('.ant-layout-content');
+		if (!el) return;
+		
+		const ro = new ResizeObserver(() => {
+			// 减去 40px 的留白/头部空间
+			setListHeight(el.clientHeight - 20);
+		});
+		
+		ro.observe(el);
+		return () => ro.disconnect();
+	}, []);
 
 	return (
 		<PageContainer>
 			<div
 				ref={containerRef}
 				style={{
-					height: '90vh',
-					overflowY: 'auto'
+					width: '100%'
 				}}
 			>
-				<div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-					{cards.map((card) => (
-						<div
-							key={card.id}
-							style={{
-								background: '#fff',
-								borderRadius: 8,
-								boxShadow: '2px 2px 8px rgba(0,0,0,0.1)',
-								padding: 16,
-								width: '220px'
-							}}
-						>
-							<h3>{card.title}</h3>
-							<p>{card.description}</p>
-						</div>
-					))}
-				</div>
+				<Listy<Card> virtual height={listHeight}  items={cards} rowKey='id' itemRender={(item) => (
+					<div
+						key={item.id}
+						style={{
+							background: '#fff',
+							borderRadius: 8,
+							boxShadow: '2px 2px 8px rgba(0,0,0,0.1)',
+							padding: 16,
+							width: '220px'
+						}}
+					>
+						<h3>{item.title}</h3>
+						<p>{item.description}</p>
+					</div>
+				)} />
 				{loading && (
 					<div style={{ textAlign: 'center', margin: 16 }}>加载中...</div>
 				)}
